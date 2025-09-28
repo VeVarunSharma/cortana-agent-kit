@@ -5,6 +5,7 @@ import { fetchMarketNews } from "./sources";
 import { MarketNews } from "./types";
 
 const tradingAnalystAgent: Agent = {
+  id: "trading-analyst",
   name: "Trading Analyst",
   schedule: "0 8 * * 1-5", // 8 AM on weekdays
   run: async () => {
@@ -14,7 +15,7 @@ const tradingAnalystAgent: Agent = {
     const newsItems: MarketNews[] = await fetchMarketNews();
     const headlines = newsItems
       .map((item) => `- ${item.headline} (Source: ${item.source})`)
-      .join("\n");
+      .join("");
 
     // 2. Generate AI analysis
     const analysis = await azureAIService.generateAnalysis(headlines);
@@ -24,7 +25,7 @@ const tradingAnalystAgent: Agent = {
     const htmlContent = `
       <h1>Daily Trading Analysis</h1>
       <h2>Key Market Insights</h2>
-      <p>${analysis.replace(/\n/g, "<br>")}</p>
+      <p>${analysis.replace(/ /g, "<br>")}</p>
       <hr>
       <h3>Sources</h3>
       <ul>

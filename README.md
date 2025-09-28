@@ -109,13 +109,13 @@ The framework is designed to make adding new agents simple.
 
     ```typescript
     // src/agents/my-new-agent/index.ts
-    import { Agent } from "../../core/agent.interface";
+    import { Agent } from '../../core/agent.interface';
 
     const myNewAgent: Agent = {
-      name: "My New Agent",
-      schedule: "0 0 * * *", // Runs every day at midnight
+      name: 'My New Agent',
+      schedule: '0 0 * * *', // Runs every day at midnight
       run: async () => {
-        console.log("My new agent is running!");
+        console.log('My new agent is running!');
         // Add your agent's logic here...
         await Promise.resolve();
       },

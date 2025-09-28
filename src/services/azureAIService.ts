@@ -1,5 +1,9 @@
 import { AIProjectClient } from "@azure/ai-projects";
-import { DefaultAzureCredential } from "@azure/identity";
+import "@azure/ai-projects/patch/inference"; // This patches the client with the .inference property
+import {
+  DefaultAzureCredential,
+  ClientSecretCredential,
+} from "@azure/identity";
 import { config } from "../config";
 import OpenAI from "openai";
 
@@ -11,15 +15,33 @@ class AzureAIService {
     if (!config.azureAIProjectEndpoint) {
       throw new Error("Azure AI Project endpoint is not configured.");
     }
+
+    let credential;
+    if (
+      config.azureTenantId &&
+      config.azureClientId &&
+      config.azureClientSecret
+    ) {
+      console.log("Using ClientSecretCredential for authentication.");
+      credential = new ClientSecretCredential(
+        config.azureTenantId,
+        config.azureClientId,
+        config.azureClientSecret
+      );
+    } else {
+      console.log("Using DefaultAzureCredential for authentication.");
+      credential = new DefaultAzureCredential();
+    }
+
     this.projectClient = new AIProjectClient(
       config.azureAIProjectEndpoint,
-      new DefaultAzureCredential()
+      credential
     );
   }
 
   private async getOpenAIClient(): Promise<OpenAI> {
     if (!this.openAIClient) {
-      // @ts-ignore - The 'inference' property is available on the client
+      // @ts-ignore
       this.openAIClient = await this.projectClient.inference.azureOpenAI({
         apiVersion: config.azureOpenAIApiVersion,
       });
@@ -29,6 +51,7 @@ class AzureAIService {
     }
     return this.openAIClient;
   }
+
   async generateAnalysis(content: string): Promise<string> {
     const deploymentName = config.azureOpenAIApiDeploymentName;
     if (!deploymentName) {
@@ -44,7 +67,8 @@ class AzureAIService {
       },
       {
         role: "user",
-        content: `News Headlines:\n${content}`,
+        content: `News Headlines:
+${content}`,
       },
     ];
 
