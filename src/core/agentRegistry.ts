@@ -1,10 +1,10 @@
-import fs from "fs";
-import path from "path";
-import { Agent } from "./agent.interface";
+import fs from 'fs';
+import path from 'path';
+import { Agent } from './agent.interface';
 
 export const loadAgents = async (): Promise<Agent[]> => {
   const agents: Agent[] = [];
-  const agentsDir = path.join(__dirname, "../agents");
+  const agentsDir = path.join(__dirname, '../agents');
 
   const agentDirectories = fs
     .readdirSync(agentsDir, { withFileTypes: true })
@@ -12,7 +12,7 @@ export const loadAgents = async (): Promise<Agent[]> => {
     .map((dirent) => dirent.name);
 
   for (const dir of agentDirectories) {
-    const agentPath = path.join(agentsDir, dir, "index.ts");
+    const agentPath = path.join(agentsDir, dir, 'index.ts');
     if (fs.existsSync(agentPath)) {
       try {
         const { agent } = await import(agentPath);
