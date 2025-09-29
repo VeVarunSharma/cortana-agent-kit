@@ -1,19 +1,19 @@
-import nodemailer from "nodemailer";
-import { config } from "../config";
+import nodemailer from 'nodemailer';
+import { config } from '../config';
 
 class EmailService {
   private transporter;
 
   constructor() {
     if (!config.emailHost || !config.emailUser || !config.emailPass) {
-      console.warn("Email service is not configured. Emails will not be sent.");
+      console.warn('Email service is not configured. Emails will not be sent.');
       this.transporter = null;
       return;
     }
     this.transporter = nodemailer.createTransport({
       host: config.emailHost,
       port: config.emailPort,
-      secure: config.emailPort === 465, // true for 465, false for other ports
+      //   secure: config.emailPort === 465, // true for 465, false for other ports
       auth: {
         user: config.emailUser,
         pass: config.emailPass,
@@ -23,7 +23,7 @@ class EmailService {
 
   async sendEmail(subject: string, htmlContent: string): Promise<void> {
     if (!this.transporter) {
-      console.warn("Email not sent because email service is not configured.");
+      console.warn('Email not sent because email service is not configured.');
       return;
     }
 
@@ -41,9 +41,9 @@ class EmailService {
 
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log("Email sent successfully.");
+      console.log('Email sent successfully.');
     } catch (error) {
-      console.error("Error sending email:", error);
+      console.error('Error sending email:', error);
     }
   }
 }
