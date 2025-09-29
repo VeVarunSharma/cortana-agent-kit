@@ -42,6 +42,8 @@ class EmailService {
     try {
       await this.transporter.sendMail(mailOptions);
       console.log('Email sent successfully.');
+      console.log('Subject:', subject);
+      console.log('Content:', htmlContent);
     } catch (error) {
       console.error('Error sending email:', error);
     }
