@@ -8,6 +8,7 @@ class TradingAnalystAgent extends BaseAgent {
   id = 'trading-analyst';
   name = 'Trading Analyst';
   schedule = '0 8 * * 1-5'; // 8 AM on weekdays
+  modelId = 'o4-mini' as const;
 
   async run(): Promise<void> {
     console.log('Running Trading Analyst Agent...');
