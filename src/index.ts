@@ -48,8 +48,8 @@ const startServer = async () => {
     console.log('Agents scheduled.');
 
     app.listen(port, () => {
-      console.log(`Cortana Agent Service running at http://localhost:${port}`);
-      console.log(`Manually trigger an agent, e.g., curl -X POST http://localhost:3000/api/agents/trading-analyst/run`);
+      console.log(`Cortana Agent Service running on ${port}`);
+      console.log(`Manually trigger an agent, e.g., curl -X POST /api/agents/trading-analyst/run`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

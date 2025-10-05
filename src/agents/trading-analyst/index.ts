@@ -7,10 +7,18 @@ import { config } from '../../config/global.config';
 import { CATEGORIES, Topic } from './topics';
 
 class TradingAnalystAgent extends BaseAgent {
-  id = 'trading-analyst';
-  name = 'Trading Analyst';
-  schedule = '0 8 * * 1-5'; // 8 AM on weekdays
-  modelId = 'o4-mini' as const;
+  constructor() {
+    super({
+      id: 'trading-analyst',
+      name: 'Trading Analyst',
+      schedule: '0 8 * * 1-5', // 8 AM on weekdays
+      modelId: 'o4-mini' as const,
+    });
+  }
+
+  process(data: any): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
 
   async run(): Promise<void> {
     console.log('Running Trading Analyst Agent...');
