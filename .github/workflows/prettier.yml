@@ -1,0 +1,37 @@
+name: Prettier Code Formatting
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check Prettier formatting
+        run: pnpm format:check
+
+      - name: Show diff if formatting issues exist
+        if: failure()
+        run: |
+          echo "::error::Code is not properly formatted. Please run 'pnpm format' to fix formatting issues."
+          pnpm format:check --list-different
