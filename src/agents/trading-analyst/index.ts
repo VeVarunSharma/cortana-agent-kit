@@ -3,7 +3,7 @@ import { emailService } from '../../services/emailService';
 import { fetchMarketNews } from './sources';
 import { MarketNews } from './types';
 import OpenAI from 'openai';
-import { config } from '../../config';
+import { config } from '../../config/global.config';
 import { CATEGORIES, Topic } from './topics';
 
 class TradingAnalystAgent extends BaseAgent {

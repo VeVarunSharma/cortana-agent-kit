@@ -2,7 +2,7 @@ import express from 'express';
 import { Agent } from './core/agent.interface';
 import { loadAgents } from './core/agentRegistry';
 import { scheduleAgents } from './core/scheduler';
-import './config'; // Ensures config is loaded
+import './config/global.config'; // Ensures config is loaded
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -22,7 +22,6 @@ app.get('/health', (req, res) => {
 app.post('/api/agents/:agentId/run', async (req, res) => {
   const { agentId } = req.params;
   const agentToRun = loadedAgents.find((agent) => agent.id === agentId);
-
   if (!agentToRun) {
     return res.status(404).json({ message: `Agent with ID '${agentId}' not found.` });
   }

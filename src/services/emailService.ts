@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { config } from '../config';
+import { config } from '../config/global.config';
 
 class EmailService {
   private createTransporter() {
