@@ -2,18 +2,14 @@ import nodemailer from 'nodemailer';
 import { config } from '../config';
 
 class EmailService {
-  private transporter;
-
-  constructor() {
+  private createTransporter() {
     if (!config.emailHost || !config.emailUser || !config.emailPass) {
       console.warn('Email service is not configured. Emails will not be sent.');
-      this.transporter = null;
-      return;
+      return null;
     }
-    this.transporter = nodemailer.createTransport({
+    return nodemailer.createTransport({
       host: config.emailHost,
       port: config.emailPort,
-      //   secure: config.emailPort === 465, // true for 465, false for other ports
       auth: {
         user: config.emailUser,
         pass: config.emailPass,
@@ -22,14 +18,17 @@ class EmailService {
   }
 
   async sendEmail(subject: string, htmlContent: string): Promise<void> {
-    if (!this.transporter) {
-      console.warn('Email not sent because email service is not configured.');
-      return;
+    const transporter = this.createTransporter();
+    if (!transporter) {
+      const warning = 'Email not sent because email service is not configured.';
+      console.warn(warning);
+      throw new Error(warning);
     }
 
     if (!config.emailFrom || !config.emailTo) {
-      console.error('Email "from" or "to" address is not configured.');
-      return;
+      const errorMsg = 'Email "from" or "to" address is not configured.';
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
 
     const mailOptions = {
@@ -40,12 +39,14 @@ class EmailService {
     };
 
     try {
-      await this.transporter.sendMail(mailOptions);
+      const info = await transporter.sendMail(mailOptions);
       console.log('Email sent successfully.');
-      console.log('Subject:', subject);
-      console.log('Content:', htmlContent);
+      console.log('Message ID:', info.messageId);
     } catch (error) {
       console.error('Error sending email:', error);
+      throw error;
+    } finally {
+      transporter.close(); // Close the connection
     }
   }
 }

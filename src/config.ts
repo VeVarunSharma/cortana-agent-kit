@@ -10,4 +10,7 @@ export const config = {
   emailPass: process.env.EMAIL_PASS,
   emailFrom: process.env.EMAIL_FROM,
   emailTo: process.env.EMAIL_TO,
+
+  // Alpha Vantage
+  alphaVantageApiKey: process.env.ALPHA_VANTAGE_API_KEY,
 };

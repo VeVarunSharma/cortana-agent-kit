@@ -25,7 +25,7 @@ export abstract class BaseAgent implements Agent {
       this.openai = azureAIService.getClient(this.modelId);
     }
 
-    const { temperature = 1, maxTokens = 500 } = options;
+    const { temperature = 1, maxTokens = 10000 } = options;
     const modelConfig = models[this.modelId];
 
     if (!modelConfig) {
@@ -44,6 +44,10 @@ export abstract class BaseAgent implements Agent {
       max_completion_tokens: maxTokens,
       temperature: temperature,
     });
+
+    console.log('--- Raw OpenAI Response ---');
+    console.log(JSON.stringify(response, null, 2));
+    console.log('--------------------------');
 
     return response.choices[0].message?.content?.trim() ?? '';
   }

@@ -1,41 +1,48 @@
+import axios from 'axios';
 import { MarketNews } from './types';
+import { CATEGORIES } from './topics';
 
-// TODO: Integrate a real news API (e.g., NewsAPI, Alpha Vantage, Alpaca).
-export const fetchMarketNews = async (): Promise<MarketNews[]> => {
-  console.log('Fetching market news...');
-  // Mock data for now
-  const mockNews: MarketNews[] = [
-    {
-      headline: 'Global demand for lithium expected to triple by 2030, major report finds.',
-      source: 'Reuters',
-      url: '#',
-    },
-    {
-      headline: 'US government announces $5 billion investment in domestic cobalt refining.',
-      source: 'Bloomberg',
-      url: '#',
-    },
-    {
-      headline: 'New tensions in South China Sea drive up defense stocks in the region.',
-      source: 'Associated Press',
-      url: '#',
-    },
-    {
-      headline: 'Major aerospace firm lands $10B contract for next-gen fighter jets.',
-      source: 'Defense News',
-      url: '#',
-    },
-    {
-      headline: 'Semiconductor industry faces new supply chain disruptions from factory fire.',
-      source: 'Wall Street Journal',
-      url: '#',
-    },
-    {
-      headline: 'AI chipmaker unveils new GPU architecture, promising 10x performance increase.',
-      source: 'The Verge',
-      url: '#',
-    },
-  ];
+const API_URL = 'https://www.alphavantage.co/query';
 
-  return Promise.resolve(mockNews);
+export const fetchMarketNews = async (apiKey: string): Promise<MarketNews[]> => {
+  if (!apiKey) {
+    throw new Error('Alpha Vantage API key is required.');
+  }
+
+  console.log('Fetching market news from Alpha Vantage...');
+
+  // The Alpha Vantage API only supports specific topic strings.
+  // We will fetch a broad set of relevant topics and then use our internal
+  // CATEGORIES to group them for the user.
+  const topics = 'technology,blockchain';
+
+  try {
+    const response = await axios.get(API_URL, {
+      params: {
+        function: 'NEWS_SENTIMENT',
+        // This can be customized or made dynamic based on agent's focus.
+        topics: topics,
+        limit: 25, // Fetch 50 recent articles to ensure good coverage
+        apikey: apiKey,
+      },
+      headers: {
+        'User-Agent': 'request', // Alpha Vantage requires a User-Agent header
+      },
+    });
+
+    if (response.data.feed && Array.isArray(response.data.feed)) {
+      // The API returns a 'feed' array. We'll map it to our MarketNews type.
+      // Note: The API structure might have changed. Always log and verify the raw response.
+      return response.data.feed as MarketNews[];
+    } else {
+      // Handle cases where the API response is not as expected
+      console.warn('Alpha Vantage API did not return a valid feed:', response.data);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching market news from Alpha Vantage:', error);
+    // Depending on the desired error handling, you might want to return an empty array
+    // or re-throw the error to be handled by the calling agent.
+    throw error;
+  }
 };
