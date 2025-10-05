@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# This script deploys the Cortana Agent Kit service to Azure Container Apps.
+# Prerequisites: 
+# 1. Azure Container Registry with the image (run deploy-to-acr.azcli first)
+# 2. Container Apps Environment (run deploy-container-app-env.azcli first)
+
+# Set variables for your deployment
+RESOURCE_GROUP="cortana-agent-kit-rg"
+ACR_NAME="cortanaagentkitacr"
+CONTAINER_APP_ENVIRONMENT="cortana-agent-kit-env"
+CONTAINER_APP_NAME="cortana-agent-kit"
+IMAGE_NAME="cortana-agent-kit:latest"
+
+echo "Deploying Cortana Agent Kit to Azure Container Apps..."
+
+# 1. Log in to Azure
+echo "Logging in to Azure..."
+az login
+
+# 2. Set the Azure subscription
+echo "Setting Azure subscription..."
+az account set --subscription "cd630477-9f80-4c33-9001-4d94c4cbc5fe"
+
+# 3. Get the full ACR login server name
+ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
+if [ -z "$ACR_LOGIN_SERVER" ]; then
+    echo "Error: Could not get ACR login server. Make sure ACR exists and you have access."
+    exit 1
+fi
+
+FULL_IMAGE_NAME="$ACR_LOGIN_SERVER/cortana-agent-kit:latest"
+echo "Using image: $FULL_IMAGE_NAME"
+
+# 4. Enable admin access for ACR (needed for Container Apps to pull images)
+echo "Enabling admin access for ACR..."
+az acr update --name $ACR_NAME --admin-enabled true
+
+# 5. Get ACR credentials
+ACR_USERNAME=$(az acr credential show --name $ACR_NAME --query username --output tsv)
+ACR_PASSWORD=$(az acr credential show --name $ACR_NAME --query passwords[0].value --output tsv)
+
+# 6. Deploy the Container App (initial deployment with placeholder secrets)
+echo "Creating Container App '$CONTAINER_APP_NAME'..."
+az containerapp create \
+  --name $CONTAINER_APP_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --environment $CONTAINER_APP_ENVIRONMENT \
+  --image $FULL_IMAGE_NAME \
+  --registry-server $ACR_LOGIN_SERVER \
+  --registry-username $ACR_USERNAME \
+  --registry-password $ACR_PASSWORD \
+  --target-port 8000 \
+  --ingress external \
+  --cpu 1.0 \
+  --memory 2.0Gi \
+  --min-replicas 1 \
+  --max-replicas 10 \
+  --secrets \
+    azure-openai-api-key-o4-mini="PLACEHOLDER_UPDATE_ME" \
+    azure-openai-api-key-deepseek-r1="PLACEHOLDER_UPDATE_ME" \
+    email-host="smtp.example.com" \
+    email-user="user@example.com" \
+    email-pass="PLACEHOLDER_UPDATE_ME" \
+    email-from="user@example.com" \
+    email-to="recipient@example.com" \
+    alpha-vantage-api-key="PLACEHOLDER_UPDATE_ME" \
+  --env-vars \
+    PORT=8000 \
+    EMAIL_PORT=587 \
+    AZURE_OPENAI_API_KEY_O4_MINI=secretref:azure-openai-api-key-o4-mini \
+    AZURE_OPENAI_API_KEY_DEEPSEEK_R1=secretref:azure-openai-api-key-deepseek-r1 \
+    EMAIL_HOST=secretref:email-host \
+    EMAIL_USER=secretref:email-user \
+    EMAIL_PASS=secretref:email-pass \
+    EMAIL_FROM=secretref:email-from \
+    EMAIL_TO=secretref:email-to \
+    ALPHA_VANTAGE_API_KEY=secretref:alpha-vantage-api-key
+
+# Get the Container App URL
+CONTAINER_APP_URL=$(az containerapp show \
+  --name $CONTAINER_APP_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --query properties.configuration.ingress.fqdn \
+  --output tsv)
+
+echo ""
+echo "🎉 Deployment completed successfully!"
+echo "Container App Name: $CONTAINER_APP_NAME"
+echo "Container App URL: https://$CONTAINER_APP_URL"
+echo "Health Check URL: https://$CONTAINER_APP_URL/health"
+echo ""
+echo "⚠️  IMPORTANT: You need to update the secrets with actual values using the Azure CLI or Azure Portal:"
+echo "Example commands to update secrets:"
+echo "az containerapp secret set --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --secrets azure-openai-api-key-o4-mini='YOUR_ACTUAL_API_KEY'"
+echo "az containerapp secret set --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --secrets email-host='smtp.example.com'"
+echo ""
+echo "To check logs:"
+echo "az containerapp logs show --name $CONTAINER_APP_NAME --resource-group $RESOURCE_GROUP --follow"

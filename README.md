@@ -93,10 +93,29 @@ You can build and run the service in a Docker container. This is the recommended
 docker build -t cortana-agent-service .
 
 # 2. Run the container, passing in your .env file
-docker run -p 3000:3000 --env-file .env cortana-agent-service
+docker run -p 8000:8000 --env-file .env cortana-agent-service
 ```
 
-The service will be available at `http://localhost:3000`. You can check its health at `http://localhost:3000/health`.
+The service will be available at `http://localhost:8000`. You can check its health at `http://localhost:8000/health`.
+
+### Azure Container Apps (Production Deployment)
+
+For production deployment to Azure Container Apps, see the [**Deployment Guide**](./DEPLOYMENT.md) for detailed instructions.
+
+Quick deployment:
+```bash
+# 1. Build and push to Azure Container Registry
+./deploy-to-acr.azcli
+
+# 2. Create Container Apps Environment
+./deploy-container-app-env.azcli
+
+# 3. Deploy the Container App
+./deploy-to-container-apps.azcli
+
+# 4. Update secrets with actual values
+./update-container-app-secrets.azcli
+```
 
 ---
 

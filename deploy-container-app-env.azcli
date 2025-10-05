@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# This script creates an Azure Container Apps Environment for hosting container apps.
+
+# Set variables for your deployment
+# Please replace the placeholder values if you have different names.
+RESOURCE_GROUP="cortana-agent-kit-rg"
+LOCATION="eastus"
+CONTAINER_APP_ENVIRONMENT="cortana-agent-kit-env"
+LOG_ANALYTICS_WORKSPACE="cortana-agent-kit-logs"
+
+echo "Creating Azure Container Apps Environment..."
+
+# 1. Log in to Azure
+echo "Logging in to Azure..."
+az login
+
+# 2. Set the Azure subscription
+echo "Setting Azure subscription..."
+az account set --subscription "cd630477-9f80-4c33-9001-4d94c4cbc5fe"
+
+# 3. Ensure resource group exists
+echo "Ensuring resource group '$RESOURCE_GROUP' exists..."
+az group create --name $RESOURCE_GROUP --location $LOCATION
+
+# 4. Register necessary Azure resource providers
+echo "Registering resource providers (this may take a few minutes)..."
+az provider register --namespace Microsoft.App
+az provider register --namespace Microsoft.OperationalInsights
+
+# Wait for registration to complete
+echo "Waiting for provider registration to complete..."
+az provider show -n Microsoft.App --query "registrationState" | grep "Registered"
+az provider show -n Microsoft.OperationalInsights --query "registrationState" | grep "Registered"
+
+# 5. Create Log Analytics workspace (required for Container Apps)
+echo "Creating Log Analytics workspace '$LOG_ANALYTICS_WORKSPACE'..."
+az monitor log-analytics workspace create \
+  --resource-group $RESOURCE_GROUP \
+  --workspace-name $LOG_ANALYTICS_WORKSPACE \
+  --location $LOCATION
+
+# Get the workspace ID and key
+LOG_ANALYTICS_WORKSPACE_ID=$(az monitor log-analytics workspace show \
+  --resource-group $RESOURCE_GROUP \
+  --workspace-name $LOG_ANALYTICS_WORKSPACE \
+  --query customerId \
+  --output tsv)
+
+LOG_ANALYTICS_WORKSPACE_KEY=$(az monitor log-analytics workspace get-shared-keys \
+  --resource-group $RESOURCE_GROUP \
+  --workspace-name $LOG_ANALYTICS_WORKSPACE \
+  --query primarySharedKey \
+  --output tsv)
+
+# 6. Create Container Apps Environment
+echo "Creating Container Apps Environment '$CONTAINER_APP_ENVIRONMENT'..."
+az containerapp env create \
+  --name $CONTAINER_APP_ENVIRONMENT \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --logs-workspace-id $LOG_ANALYTICS_WORKSPACE_ID \
+  --logs-workspace-key $LOG_ANALYTICS_WORKSPACE_KEY
+
+echo "Container Apps Environment created successfully!"
+echo "Environment Name: $CONTAINER_APP_ENVIRONMENT"
+echo "Resource Group: $RESOURCE_GROUP"
+echo "Location: $LOCATION"
