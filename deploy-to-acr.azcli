@@ -1,0 +1,57 @@
+# This script pushes a local Docker image to Azure Container Registry.
+
+# Set variables for your deployment
+# Please replace the placeholder values if you have different names.
+RESOURCE_GROUP="cortana-agent-kit-rg"
+ACR_NAME="cortanaagentkitacr"
+LOCATION="eastus"
+LOCAL_IMAGE_NAME="cortana-agent-kit:latest"
+
+# 1. Log in to Azure
+echo "Logging in to Azure..."
+az login 
+
+# 2. Set the Azure subscription
+echo "Setting Azure subscription..."
+az account set --subscription "cd630477-9f80-4c33-9001-4d94c4cbc5fe"
+
+
+# 2. Create a resource group if it doesn't exist
+echo "Ensuring resource group '$RESOURCE_GROUP' exists..."
+az group create --name $RESOURCE_GROUP --location $LOCATION
+
+# 3. Register necessary Azure resource providers
+echo "Registering resource providers (this may take a few minutes)..."
+az provider register --namespace Microsoft.ContainerRegistry
+az provider register --namespace Microsoft.App
+# Wait for registration to complete
+az provider show -n Microsoft.ContainerRegistry --query "registrationState" | grep "Registered"
+az provider show -n Microsoft.App --query "registrationState" | grep "Registered"
+
+
+# 4. Create an Azure Container Registry (ACR) if it doesn't exist
+echo "Ensuring Azure Container Registry '$ACR_NAME' exists..."
+az acr create --name $ACR_NAME --resource-group $RESOURCE_GROUP --sku Basic --admin-enabled true
+
+# 5. Log in to your ACR
+echo "Logging into ACR..."
+az acr login --name $ACR_NAME
+
+# 6. Get the full server name for your ACR
+ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
+
+if [ -z "$ACR_LOGIN_SERVER" ]; then
+    echo "Error: Could not get ACR login server. Aborting."
+    exit 1
+fi
+
+# 7. Tag your local Docker image for ACR
+REMOTE_IMAGE_NAME="$ACR_LOGIN_SERVER/$(echo $LOCAL_IMAGE_NAME | cut -d: -f1):$(echo $LOCAL_IMAGE_NAME | cut -d: -f2)"
+echo "Tagging local image '$LOCAL_IMAGE_NAME' as '$REMOTE_IMAGE_NAME'"
+docker tag $LOCAL_IMAGE_NAME $REMOTE_IMAGE_NAME
+
+# 8. Push the tagged image to ACR
+echo "Pushing image to ACR..."
+docker push $REMOTE_IMAGE_NAME
+
+echo "Image push complete. '$REMOTE_IMAGE_NAME' is now in your Azure Container Registry."
