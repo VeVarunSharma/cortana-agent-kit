@@ -1,17 +1,30 @@
-import { Agent } from './agent.interface';
+import { Agent, AgentOptions, Topic } from './agent.interface';
 import { azureAIService } from '../services/azureAIService';
 import { models } from '../config/models.config';
 import OpenAI from 'openai';
 
-export abstract class BaseAgent implements Agent {
-  abstract id: string;
-  abstract name: string;
-  abstract schedule: string;
-  abstract modelId: keyof typeof models;
+export abstract class BaseAgent<T = any> implements Agent<T> {
+  id: string;
+  name: string;
+  schedule: string;
+  modelId: keyof typeof models;
+  protected topics: Topic[] = [];
 
   protected openai: OpenAI | undefined;
 
+  constructor(options: AgentOptions) {
+    this.id = options.id;
+    this.name = options.name;
+    this.schedule = options.schedule;
+    this.modelId = options.modelId;
+  }
+
+  protected initializeTopics(topics: Topic[]): void {
+    this.topics = topics;
+  }
+
   abstract run(): Promise<void>;
+  abstract process(data: T): Promise<void>;
 
   protected async getCompletion(
     messages: OpenAI.Chat.ChatCompletionMessageParam[],

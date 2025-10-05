@@ -12,13 +12,13 @@ export const loadAgents = async (): Promise<Agent[]> => {
     .map((dirent) => dirent.name);
 
   for (const dir of agentDirectories) {
-    const agentPath = path.join(agentsDir, dir, 'index.ts');
+    const agentPath = path.join(agentsDir, dir, 'agent.ts');
     if (fs.existsSync(agentPath)) {
       try {
-        const { agent } = await import(agentPath);
-        if (agent) {
-          agents.push(agent);
-          console.log(`Successfully loaded agent: ${agent.name}`);
+        const agentModule = await import(path.resolve(agentPath));
+        if (agentModule.agent) {
+          agents.push(agentModule.agent);
+          console.log(`Successfully loaded agent: ${agentModule.agent.name}`);
         }
       } catch (error) {
         console.error(`Error loading agent from ${dir}:`, error);
