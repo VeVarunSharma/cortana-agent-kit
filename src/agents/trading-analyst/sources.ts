@@ -22,7 +22,7 @@ export const fetchMarketNews = async (apiKey: string): Promise<MarketNews[]> => 
         function: 'NEWS_SENTIMENT',
         // This can be customized or made dynamic based on agent's focus.
         topics: topics,
-        limit: 25, // Fetch 50 recent articles to ensure good coverage
+        limit: 25, // Fetch 25 recent articles to ensure good coverage
         apikey: apiKey,
       },
       headers: {
